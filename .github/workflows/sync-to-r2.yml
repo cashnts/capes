@@ -13,38 +13,18 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v3
       
-      - name: Install AWS CLI
-        run: |
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip -q awscliv2.zip
-          sudo ./aws/install --update
-      
-      - name: Configure R2 credentials
-        run: |
-          mkdir -p ~/.aws
-          cat > ~/.aws/credentials << EOF
-          [default]
-          aws_access_key_id = ${{ secrets.R2_ACCESS_KEY_ID }}
-          aws_secret_access_key = ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          EOF
-          
-          cat > ~/.aws/config << EOF
-          [default]
-          region = auto
-          EOF
-      
-      - name: Sync to R2
-        run: |
-          aws s3 sync . s3://${{ secrets.R2_BUCKET_NAME }} \
-            --endpoint-url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com \
-            --exclude "*" \
-            --include "*.png" \
-            --acl public-read
-      
-      - name: Summary
-        run: |
-          echo "✅ Capes synced to R2!"
-          echo "🌐 URL: https://textures.pixelburma.club/"
+      - name: Upload to R2
+        uses: ryand56/r2-upload-action@latest
+        with:
+          r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}
+          r2-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          r2-bucket: ${{ secrets.R2_BUCKET_NAME }}
+          source-dir: ./
+          destination-dir: ./
+          output-file-url: false
+          keep-file-fresh: false
+          multipart-size: 100
